@@ -8,9 +8,9 @@ User = get_user_model()
 
 
 class Group(models.Model):
-    title = models.CharField('Название', max_length=200,)
+    title = models.CharField('Название', max_length=200)
     slug = models.SlugField('Текст для ссылки', unique=True)
-    description = models.TextField('Описание',)
+    description = models.TextField('Описание', )
 
     def __str__(self):
         return self.title
