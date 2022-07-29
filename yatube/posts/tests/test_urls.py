@@ -2,6 +2,7 @@ from http import HTTPStatus
 
 from django.core.cache import cache
 from django.test import Client, TestCase
+
 from posts.models import Group, Post, User
 
 
@@ -9,7 +10,6 @@ class PostURLTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.guest_client = Client()
         cls.user = User.objects.create_user(username='HasNoName')
         cls.group = Group.objects.create(
             title='Тестгруппа',
@@ -23,6 +23,7 @@ class PostURLTests(TestCase):
         )
 
     def setUp(self):
+        self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
         cache.clear()

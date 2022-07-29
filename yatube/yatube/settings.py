@@ -1,5 +1,9 @@
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 POST_NUMBER = 10
 
 LOGIN_URL = 'users:login'
@@ -7,7 +11,7 @@ LOGIN_REDIRECT_URL = 'posts:index'
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-SECRET_KEY = 'u$c!u-b!oo0y=88gqn-ud)4_7_2j#bl$zu)9+tz+8v!ur90w^m'
+SECRET_KEY = str(os.getenv('SECRET_KEY'))
 
 DEBUG = True
 

@@ -7,6 +7,7 @@ from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
+
 from posts.models import Comment, Group, Post, User
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
@@ -17,7 +18,6 @@ class PostsPagesTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.guest_client = Client()
         cls.user = User.objects.create_user(username='tim')
         cls.group = Group.objects.create(
             title='Тестгруппа',
@@ -53,6 +53,7 @@ class PostsPagesTests(TestCase):
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
+        self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
         cache.clear()
@@ -144,7 +145,7 @@ class PaginatorViewsTest(TestCase):
             slug='gsom',
             description='тестовое описание группы',
         )
-        cls.my_posts = {}
+        cls.my_posts = {}  # вообще, это вроде не сет, а словарик...
         for i in range(16):
             name = f'cls.post{i}'
             cls.my_posts[name] = Post.objects.create(

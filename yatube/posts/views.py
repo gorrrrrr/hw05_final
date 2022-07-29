@@ -34,8 +34,7 @@ def profile(request, username):
     page_obj = paginate(post_list, request)
     following = False
     if request.user.is_authenticated:
-        match = Follow.objects.filter(user=request.user, author=author)
-        if len(match) > 0:  # Наверно можно проще, но не пришло в голову пока
+        if Follow.objects.filter(user=request.user, author=author).exists():
             following = True
     return render(request, 'posts/profile.html', {
         'author': author, 'page_obj': page_obj, 'following': following})
@@ -93,19 +92,16 @@ def add_comment(request, post_id):
         comment.post = get_object_or_404(Post, id=post_id)
         comment.save()
     return redirect('posts:post_detail', post_id=post_id)
+    # если делать guard lock будет дважды одинаковый return. а так лаконичней
 
 
 @login_required
 def follow_index(request):
     """Блогозаписи из подписок."""
-    user = request.user
-    follow_list = user.follower.all()
-    authors = []
-    for i in follow_list:
-        authors.append(i.author)
+    authors = User.objects.filter(following__user=request.user)
     post_list = Post.objects.filter(author__in=authors)
     page_obj = paginate(post_list, request)
-    return render(request, 'posts/follow.html', {
+    return render(request, 'posts/index.html', {
         'page_obj': page_obj, 'follow': True})
 
 
@@ -114,15 +110,18 @@ def profile_follow(request, username):
     """Добавить подписку."""
     if request.user == User.objects.get(username=username):
         return redirect('posts:profile', username)
-    Follow.objects.get_or_create(user=request.user, author=User.objects.get(
-        username=username))
+    if not Follow.objects.filter(user=request.user, author=User.objects.get(
+            username=username)).exists():
+        Follow.objects.create(user=request.user, author=User.objects.get(
+            username=username))
     return redirect('posts:profile', username)
 
 
 @login_required
 def profile_unfollow(request, username):
     """Убрать подписку."""
-    unfollow = Follow.objects.get(user=request.user,
-                                  author=User.objects.get(username=username))
-    unfollow.delete()
+    if Follow.objects.filter(user=request.user, author=User.objects.get(
+            username=username)).exists():
+        get_object_or_404(Follow, user=request.user,
+                          author=User.objects.get(username=username)).delete()
     return redirect('posts:profile', username)

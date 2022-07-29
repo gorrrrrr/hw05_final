@@ -2,10 +2,11 @@ import shutil
 import tempfile
 
 from django.conf import settings
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
-from posts.forms import CommentForm, PostForm
+
 from posts.models import Comment, Post, User
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
@@ -21,7 +22,6 @@ class PostFormTests(TestCase):
             text='Заг',
             author=cls.user,
         )
-        cls.form = PostForm()
 
     @classmethod
     def tearDownClass(cls):
@@ -31,6 +31,7 @@ class PostFormTests(TestCase):
     def setUp(self):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
+        cache.clear()
 
     def test_create_post(self):
         """Валидная форма создает запись в Post."""
@@ -91,12 +92,11 @@ class CommentFormTests(TestCase):
         super().setUpClass()
         cls.guest_client = Client()
         cls.user = User.objects.create_user(username='tim')
-        cls.pst = Post.objects.create(text='Заг',
-                                      author=cls.user)
+        cls.post = Post.objects.create(text='Заг',
+                                       author=cls.user)
         cls.test_comment = Comment.objects.create(text='ком',
                                                   author=cls.user,
-                                                  post=cls.pst)
-        cls.form = CommentForm()
+                                                  post=cls.post)
 
     def setUp(self):
         self.authorized_client = Client()
@@ -107,7 +107,7 @@ class CommentFormTests(TestCase):
         com_count = Comment.objects.count()
         form_data = {'text': 'ком2'}
         self.authorized_client.post(
-            reverse('posts:add_comment', kwargs={'post_id': self.pst.id}),
+            reverse('posts:add_comment', kwargs={'post_id': self.post.id}),
             data=form_data,
             follow=True
         )
@@ -118,7 +118,7 @@ class CommentFormTests(TestCase):
         com_count = Comment.objects.count()
         form_data = {'text': 'ком2'}
         self.guest_client.post(
-            reverse('posts:add_comment', kwargs={'post_id': self.pst.id}),
+            reverse('posts:add_comment', kwargs={'post_id': self.post.id}),
             data=form_data,
             follow=True
         )

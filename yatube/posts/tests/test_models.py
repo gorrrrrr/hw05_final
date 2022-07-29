@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.test import TestCase
 
 from ..models import Group, Post, User
@@ -19,6 +20,9 @@ class PostModelTest(TestCase):
             group=cls.group
         )
 
+    def setUp(self):
+        cache.clear()
+
     def test_models_have_correct_object_names(self):
         """Проверяем, что у моделей корректно работает __str__."""
         group = PostModelTest.group
@@ -34,20 +38,21 @@ class PostModelTest(TestCase):
 
     def test_models_have_correct_verbose_and_help_text(self):
         """Проверяем, что у моделей корректно работает verbose и help."""
-        fields_verbose_help = {
-            'verbose_name': {
-                'text': 'Текст поста',
-                'pub_date': 'Дата публикации',
-                'author': 'Автор',
-                'group': 'Группа'
-            },
-            'help_text': {
-                'text': 'Текст нового поста',
-                'group': 'Группа, к которой будет относиться пост',
-            },
-        }
-        for field_type, fields in fields_verbose_help.items():
-            for field, expected_value in fields.items():
+        fields_verbose_help = (
+            ('verbose_name', (
+                ('text', 'Текст поста'),
+                ('pub_date', 'Дата публикации'),
+                ('author', 'Автор'),
+                ('group', 'Группа')
+            )),
+            ('help_text', (
+                ('text', 'Текст нового поста'),
+                ('group', 'Группа, к которой будет относиться пост'),
+            )),
+        )   # выглядит чуть мудрёней, но работает.
+        # В тестах использовал много словарей. Заменить?
+        for field_type, fields in fields_verbose_help:
+            for field, expected_value in fields:
                 with self.subTest(field=field):
                     self.assertEqual(
                         getattr(PostModelTest.post._meta.get_field(field),
