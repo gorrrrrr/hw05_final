@@ -1,10 +1,4 @@
 {% load thumbnail %}
-{% if post.image|is_portrait %}
-    {% thumbnail post.image "500x500" crop="center" upscale=False as im %}
-    <img class="card-img my-2" src="{{ im.url }}"  style="width:30%">
-    {% endthumbnail %}
-{% else %}
-    {% thumbnail post.image "960x500" crop="center" upscale=True as im %}
-<img class="card-img my-2" src="{{ im.url }}">
-    {% endthumbnail %}
-{% endif %}
+  {% thumbnail post.image "960x500" crop="center" upscale=True as im %}
+    <img class="card-img my-2" src="{{ im.url }}">
+  {% endthumbnail %}

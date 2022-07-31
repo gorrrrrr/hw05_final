@@ -197,7 +197,7 @@ class TestGroupView:
 
     @pytest.mark.django_db(transaction=True)
     def test_group_view(self, client, post_with_group):
-        url = f'/group/{post_with_group.group.slug}'
+        url = f'/group/{post_with_group.group.slug}/'
         url_templ = '/group/<slug>/'
         try:
             response = client.get(url)
@@ -209,7 +209,7 @@ class TestGroupView:
             assert False, f'Страница `{url_templ}` не найдена, проверьте этот адрес в *urls.py*'
 
         if response.status_code != 200:
-            assert False, f'Страница `{url_templ}` работает неправильно.'
+            assert False, f'Страница `{url_templ}` работает неправильно. Код: {response.status_code}'
 
         page_context = get_field_from_context(response.context, Page)
         assert page_context is not None, (

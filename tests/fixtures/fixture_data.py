@@ -25,7 +25,7 @@ def post(user):
 
 @pytest.fixture
 def group():
-    return Group.objects.create(title='Тестовая группа 1', slug='test-link', description='Тестовое описание группы')
+    return Group.objects.create(title='Тестовая группа 1', slug='test_link', description='Тестовое описание группы')
 
 
 @pytest.fixture
