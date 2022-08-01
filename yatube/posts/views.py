@@ -5,7 +5,7 @@ from django.views.decorators.cache import cache_page
 from yatube.settings import CACHE_TIMEOUT
 
 from .forms import CommentForm, PostForm
-from .models import Follow, Group, Post, User
+from posts.models import Follow, Group, Post, User
 from .utils import paginate
 
 
@@ -33,9 +33,10 @@ def profile(request, username):
     post_list = author.posts.select_related('author', 'group').all()
     page_obj = paginate(post_list, request)
     following = False
-    if request.user.is_authenticated:
-        if Follow.objects.filter(user=request.user, author=author).exists():
-            following = True
+    if request.user.is_authenticated and Follow.objects.filter(
+        user=request.user, author=author
+    ).exists():
+        following = True
     return render(request, 'posts/profile.html', {
         'author': author, 'page_obj': page_obj, 'following': following})
 
@@ -44,14 +45,10 @@ def post_detail(request, post_id):
     """Страничка блогозаписи."""
     post = get_object_or_404(Post, pk=post_id)
     comments = post.comments.select_related('author').all()
-    form = CommentForm(request.POST or None)
-    if not form.is_valid():
-        return render(request, 'posts/post_detail.html', {
-            'post': post, 'form': form, 'comments': comments})
-    new_comment = form.save(commit=False)
-    new_comment.author = request.user
-    new_comment.save()
-    return redirect('posts:post_detail', post_id=post.pk)
+    form = CommentForm()
+    return render(request,
+                  'posts/post_detail.html',
+                  {'post': post, 'form': form, 'comments': comments})
 
 
 @login_required
@@ -68,7 +65,7 @@ def post_create(request):
 
 @login_required
 def post_edit(request, post_id):
-    """Исправление блогозаписи."""
+    """Изменение блогозаписи."""
     post = get_object_or_404(Post, pk=post_id)
     if request.user != post.author:
         return redirect('posts:post_detail', post_id=post.pk)
@@ -92,13 +89,14 @@ def add_comment(request, post_id):
         comment.post = get_object_or_404(Post, id=post_id)
         comment.save()
     return redirect('posts:post_detail', post_id=post_id)
-    # если делать guard lock будет дважды одинаковый return. а так лаконичней
 
 
 @login_required
 def follow_index(request):
     """Блогозаписи из подписок."""
     authors = User.objects.filter(following__user=request.user)
+    """нужна подсказка. пробовал через request.user.follower.all(),
+    но не понял как из queryset Follow получить queryset User"""
     post_list = Post.objects.filter(author__in=authors)
     page_obj = paginate(post_list, request)
     return render(request, 'posts/index.html', {
@@ -110,18 +108,18 @@ def profile_follow(request, username):
     """Добавить подписку."""
     if request.user == User.objects.get(username=username):
         return redirect('posts:profile', username)
-    if not Follow.objects.filter(user=request.user, author=User.objects.get(
-            username=username)).exists():
-        Follow.objects.create(user=request.user, author=User.objects.get(
-            username=username))
+    author = User.objects.get(username=username)
+    if author and not Follow.objects.filter(
+        user=request.user, author=author
+    ).exists():
+        Follow.objects.create(user=request.user, author=author)
     return redirect('posts:profile', username)
 
 
 @login_required
 def profile_unfollow(request, username):
     """Убрать подписку."""
-    if Follow.objects.filter(user=request.user, author=User.objects.get(
-            username=username)).exists():
-        get_object_or_404(Follow, user=request.user,
-                          author=User.objects.get(username=username)).delete()
+    author = User.objects.get(username=username)
+    if Follow.objects.filter(user=request.user, author=author).exists():
+        get_object_or_404(Follow, user=request.user, author=author).delete()
     return redirect('posts:profile', username)
