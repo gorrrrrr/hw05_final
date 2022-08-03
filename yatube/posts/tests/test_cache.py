@@ -33,7 +33,7 @@ class CachePagesTests(TestCase):
         то время когда кэш сформирован."""
         return response._headers['expires'][1]
 
-    def test_cashe_timeout(self):
+    def test_cache_timeout(self):
         """Cache обновляется раз в CACHE_TIMEOUT секунд."""
         response = self.guest_client.get(reverse('posts:index'))
         sleep(CACHE_TIMEOUT * 0.95)
@@ -47,7 +47,7 @@ class CachePagesTests(TestCase):
             self.exp(response), self.exp(response3), 'кэш стёрт слишком поздно'
         )
 
-    def test_index_page_cashe_shows_deleted_post(self):
+    def test_index_page_cache_shows_deleted_post(self):
         """Свежеудалённый пост остаётся в cache"""
         self.guest_client.get(reverse('posts:index'))
         Post.objects.filter(id=2).delete()

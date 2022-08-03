@@ -32,11 +32,8 @@ def profile(request, username):
     author = get_object_or_404(User, username=username)
     post_list = author.posts.select_related('author', 'group').all()
     page_obj = paginate(post_list, request)
-    following = False
-    if request.user.is_authenticated and Follow.objects.filter(
-        user=request.user, author=author
-    ).exists():
-        following = True
+    following = request.user.is_authenticated and Follow.objects.filter(
+        user=request.user, author=author).exists()
     return render(request, 'posts/profile.html', {
         'author': author, 'page_obj': page_obj, 'following': following})
 
@@ -94,10 +91,7 @@ def add_comment(request, post_id):
 @login_required
 def follow_index(request):
     """Блогозаписи из подписок."""
-    authors = User.objects.filter(following__user=request.user)
-    """нужна подсказка. пробовал через request.user.follower.all(),
-    но не понял как из queryset Follow получить queryset User"""
-    post_list = Post.objects.filter(author__in=authors)
+    post_list = Post.objects.filter(author__following__user=request.user)
     page_obj = paginate(post_list, request)
     return render(request, 'posts/index.html', {
         'page_obj': page_obj, 'follow': True})
@@ -106,12 +100,11 @@ def follow_index(request):
 @login_required
 def profile_follow(request, username):
     """Добавить подписку."""
-    if request.user == User.objects.get(username=username):
+    author = get_object_or_404(User, username=username)
+    if request.user == author:
         return redirect('posts:profile', username)
-    author = User.objects.get(username=username)
-    if author and not Follow.objects.filter(
-        user=request.user, author=author
-    ).exists():
+    qs = Follow.objects.filter(user=request.user, author=author)
+    if not qs.exists():
         Follow.objects.create(user=request.user, author=author)
     return redirect('posts:profile', username)
 
@@ -119,7 +112,8 @@ def profile_follow(request, username):
 @login_required
 def profile_unfollow(request, username):
     """Убрать подписку."""
-    author = User.objects.get(username=username)
-    if Follow.objects.filter(user=request.user, author=author).exists():
-        get_object_or_404(Follow, user=request.user, author=author).delete()
+    author = get_object_or_404(User, username=username)
+    qs = Follow.objects.filter(user=request.user, author=author)
+    if qs.exists():
+        qs.delete()
     return redirect('posts:profile', username)
